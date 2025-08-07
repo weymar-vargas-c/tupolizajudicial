@@ -703,6 +703,7 @@
         const testimonials = testimonialCarousel.querySelectorAll('.snap-center');
         const dots = document.querySelectorAll('.testimonial-carousel .rounded-full');
         let currentSlide = 0;
+        let autoplayInterval = null;
 
         function updateDots(index) {
             dots.forEach((dot, i) => {
@@ -730,19 +731,40 @@
             scrollToSlide(currentSlide);
         }
 
-        // Iniciar autoplay
-        const autoplayInterval = setInterval(nextSlide, 5000); // Cambia cada 5 segundos
+        function startAutoplay() {
+            if (!autoplayInterval) {
+                autoplayInterval = setInterval(nextSlide, 5000);
+            }
+        }
+
+        function stopAutoplay() {
+            if (autoplayInterval) {
+                clearInterval(autoplayInterval);
+                autoplayInterval = null;
+            }
+        }
+
+        // Configurar el Intersection Observer para detectar cuando el carrusel está visible
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    startAutoplay();
+                } else {
+                    stopAutoplay();
+                }
+            });
+        }, {
+            threshold: 0.6 // El carrusel debe estar al menos 30% visible
+        });
+
+        // Observar el carrusel
+        observer.observe(testimonialCarousel);
 
         // Pausar autoplay cuando el usuario interactúa con el carrusel
-        testimonialCarousel.addEventListener('mouseover', () => {
-            clearInterval(autoplayInterval);
-        });
+        testimonialCarousel.addEventListener('mouseover', stopAutoplay);
 
         // Reanudar autoplay cuando el usuario deja de interactuar
-        testimonialCarousel.addEventListener('mouseleave', () => {
-            clearInterval(autoplayInterval);
-            setInterval(nextSlide, 5000);
-        });
+        testimonialCarousel.addEventListener('mouseleave', startAutoplay);
 
         // Permitir clic en los dots para navegar
         dots.forEach((dot, index) => {
